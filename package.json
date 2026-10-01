@@ -1,0 +1,12 @@
+{
+  "name": "posablejscad",
+  "version": "0.0.1",
+  "description": "Posable circle-tube sweeps for JSCAD",
+  "main": "demo.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@jscad/modeling": "^2.13.0"
+  }
+}
