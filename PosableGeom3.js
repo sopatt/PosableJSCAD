@@ -5,6 +5,7 @@ const { colorize } = jscad.colors;
 const { union } = jscad.booleans;
 const { geom3 } = jscad.geometries;
 const { Pose } = require('./Pose');
+const { Poseable } = require('./Poseable');
 const { PI } = Math;
 
 /** geom3 plus named Poses.
@@ -15,25 +16,18 @@ const { PI } = Math;
  * A pose is a named port on the solid. 'start' and 'end' are the chain ports
  * used by fromChain.
  */
-class PosableGeom3 {
+class PosableGeom3 extends Poseable {
   #geometry;
-  #poses;
-  /** Clone the geom3 and clone each pose.
-   *
+  /** Clone the geom3. Poses are cloned by Poseable.
    * @description
    * The caller keeps their own objects; this instance does not alias them.
-   *
+   * An empty geom3 is stored if clone fails.
    * @param {object} geometry geom3. Empty geom3 if clone fails.
    * @param {Object<string, Pose>} [poses] Named ports.
    */
   constructor(geometry, poses) {
+    super(poses);
     this.#geometry = geom3.clone(geometry) || geom3.create();
-    this.#poses = {};
-    if (poses) {
-      Object.keys(poses).forEach(key => {
-        this.#poses[key] = poses[key].clone();
-      });
-    }
   }
 
   /** Polygons, after baking a pending transform into them.
@@ -94,37 +88,26 @@ class PosableGeom3 {
    */
   set transforms(value) { this.#geometry.transforms = value; }
 
-  /** Prototype-linked copy.
-   *
+  /** Copy the geom3 onto a Poseable clone.
    * @description
-   * Poses and the geom3 are cloned. A subclass clone must still copy its own
-   * fields; see Device.
-   *
-   * @returns {PosableGeom3}
+   * Poseable.clone copies the pose map, then calls this so #geometry is
+   * written by the class that declares it.
+   * @param {PosableGeom3} clone Shell created by Poseable.clone.
    */
-  clone() {
-    const clone = Object.create(Object.getPrototypeOf(this));
-    const descriptors = Object.getOwnPropertyDescriptors(this);
-    Object.defineProperties(clone, descriptors);
-    clone.#poses = Object.fromEntries(
-      Object.entries(this.#poses).map(
-        ([name, pose]) => [name, pose.clone()]
-      )
-    );
+  cloneGeometryOnto(clone) {
     clone.#geometry = geom3.clone(this.#geometry);
-    return clone;
   }
 
   /** Move the solid and every pose by matrix.
-   *
+   * @description
+   * The geom3 is transformed first, then the poses. That is the order this
+   * class already used.
    * @param {number[]} matrix Column-major 4x4.
    * @returns {PosableGeom3} this
    */
   transform(matrix) {
     this.#geometry = geom3.transform(matrix, this.#geometry);
-    Object.keys(this.#poses).forEach(key => {
-      this.#poses[key].transform(matrix);
-    });
+    super.transform(matrix);
     return this;
   }
 
@@ -146,13 +129,15 @@ class PosableGeom3 {
   }
 
   /** Pose stored at port.
-   *
+   * @description
+   * Throws when the name was never set. The base getPose returns undefined
+   * instead, which is the PosableGeom2 contract.
    * @param {string|number} port
    * @returns {Pose}
    * @throws {Error} If that port was never set.
    */
   getPose(port) {
-    const sourcePose = this.#poses[port];
+    const sourcePose = super.getPose(port);
     if (!sourcePose) {
       throw new Error(`Invalid port ${port}`);
     }
@@ -160,16 +145,14 @@ class PosableGeom3 {
   }
 
   /** Store targetPose at port.
-   *
    * @description
-   * Not cloned.
-   *
+   * Not cloned. Returns this; the base setPose does not.
    * @param {string|number} port
    * @param {Pose} targetPose
    * @returns {PosableGeom3} this
    */
   setPose(port, targetPose) {
-    this.#poses[port] = targetPose;
+    super.setPose(port, targetPose);
     return this;
   }
 
@@ -187,22 +170,6 @@ class PosableGeom3 {
     return this;
   }*/
 
-  /** Transform so the pose at port lands on targetPose.
-   *
-   * @param {string|number} port Must already exist.
-   * @param {Pose} targetPose
-   * @returns {PosableGeom3} this
-   * @throws {Error} If targetPose is missing.
-   */
-  alignTo(port, targetPose) {
-    const sourcePose = this.getPose(port);
-    if (!targetPose || !targetPose instanceof Pose) {
-      throw new Error(`Invalid targetPose`);
-    }
-    return this.transform(
-      sourcePose.getMatrix(targetPose)
-    );
-  }
   /** Lay parts end to end in place.
    *
    * @description

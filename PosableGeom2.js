@@ -1,6 +1,7 @@
 "use strict";
 const jscad = require('@jscad/modeling');
 const { Pose } = require('./Pose');
+const { Poseable } = require('./Poseable');
 const { mat4, vec2, vec3, vec4 } = jscad.maths;
 const { geom2, geom3 } = jscad.geometries;
 const { colorize } = jscad.colors;
@@ -27,25 +28,19 @@ const det2 = (m) => m[0] * m[5] - m[4] * m[1];
  * The outline is the cross-section in its own XY. A pose is a port on that
  * outline, not a move of the sides by itself.
  */
-class PosableGeom2 {
+class PosableGeom2 extends Poseable {
   #geometry;
-  #poses;
-  /** Clone the geom2 and clone each pose.
-   *
+  /** Clone the geom2. Poses are cloned by Poseable.
    * @description
-   * The caller's objects are not kept.
-   *
+   * The caller's geometry is not kept. An empty geom2 is stored if clone
+   * fails. Poseable clones each given pose so this object does not keep the
+   * caller's pose objects.
    * @param {object} geometry geom2. Empty geom2 if clone fails.
    * @param {Object<string, Pose>} [poses] Named ports.
    */
   constructor(geometry, poses) {
+    super(poses);
     this.#geometry = geom2.clone(geometry) || geom2.create();
-    this.#poses = {};
-    if (poses) {
-      Object.keys(poses).forEach(key => {
-        this.#poses[key] = poses[key].clone();
-      });
-    }
   }
 
   /** The geom2 side list.
@@ -104,25 +99,14 @@ class PosableGeom2 {
    */
   set transforms(value) { this.#geometry.transforms = value; }
 
-  /** Prototype-linked copy.
-   *
+  /** Copy the geom2 onto a Poseable clone.
    * @description
-   * Poses and the geom2 are cloned. Subclass fields copied by descriptor stay
-   * shared unless the subclass clone overwrites them.
-   *
-   * @returns {PosableGeom2}
+   * Poseable.clone copies the pose map, then calls this so #geometry is
+   * written by the class that declares it.
+   * @param {PosableGeom2} clone Shell created by Poseable.clone.
    */
-  clone() {
-    const clone = Object.create(Object.getPrototypeOf(this));
-    const descriptors = Object.getOwnPropertyDescriptors(this);
-    Object.defineProperties(clone, descriptors);
-    clone.#poses = Object.fromEntries(
-      Object.entries(this.#poses).map(
-        ([name, pose]) => [name, pose.clone()]
-      )
-    );
+  cloneGeometryOnto(clone) {
     clone.#geometry = geom2.clone(this.#geometry);
-    return clone;
   }
 
   /** Move named poses by a 4x4. Sides stay in local XY.
@@ -131,62 +115,14 @@ class PosableGeom2 {
    * projected onto the XY plane. The outline stays the cross-section in its
    * own XY. The 4x4 stays on the poses, not on the geom2: toSides would apply
    * a stored matrix with vec2 and flatten it. alignTo, getPose, and extrude
-   * place that local outline with the pose.
-   *
+   * place that local outline with the pose. Poses move first, then the geom2.
    * @param {number[]} matrix Column-major 4x4.
    * @returns {PosableGeom2} this
    */
   transform(matrix) {
-    Object.keys(this.#poses).forEach(key => {
-      this.#poses[key].transform(matrix);
-    });
+    super.transform(matrix);
     this.#geometry = geom2.transform(matrix, this.#geometry);
     return this;
-  }
-
-  /** The pose stored at port, or undefined if that name was never set.
-   *
-   * @description
-   * Does not throw.
-   *
-   * @param {string|number} port
-   * @returns {Pose|undefined}
-   */
-  getPose(port) {
-    return this.#poses[port];
-  }
-
-  /** Store pose at port.
-   *
-   * @description
-   * Not cloned.
-   *
-   * @param {string|number} port
-   * @param {Pose} pose
-   */
-  setPose(port, pose) {
-    this.#poses[port] = pose;
-  }
-
-  /** Transform so the pose at port lands on targetPose.
-   *
-   * @param {string|number} port Must already exist.
-   * @param {Pose} targetPose
-   * @returns {PosableGeom2} this
-   * @throws {Error} If port or targetPose is missing.
-   */
-  alignTo(port, targetPose) {
-    const sourcePose = this.getPose(port);
-    if (!sourcePose) {
-      throw new Error(`Invalid port ${port}`);
-    }
-    if (!targetPose || !(targetPose instanceof Pose)) {
-      throw new Error(`Invalid targetPose`);
-    }
-    const m = sourcePose.getMatrix(targetPose);
-    const g = this.transform(m);
-    //this.applyTransforms();
-    return g;
   }
 
   /** 

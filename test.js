@@ -4,6 +4,11 @@ const { Straight } = require('./Straight');
 const { Bend } = require('./Bend');
 const { DogLeg } = require('./DogLeg');
 const { Pose, rollAround } = require('./Pose');
+const { PosableGeom2 } = require('./PosableGeom2');
+const { PosableGeom3 } = require('./PosableGeom3');
+const { Poseable } = require('./Poseable');
+const jscad = require('@jscad/modeling');
+const { circle } = jscad.primitives;
 
 const [x, y, z] = [0, 1, 2];
 
@@ -47,5 +52,47 @@ if (straightEnd[z] !== 10 || bendEnd[y] === 0 || dogEnd[y] === 0 || rolled[x] !=
   console.error('index check failed');
   process.exit(1);
 }
+
+const geom2Sample = new PosableGeom2(circle({ radius: 1 }));
+const geom3Sample = new PosableGeom3();
+if (!(geom2Sample instanceof Poseable) || !(geom3Sample instanceof Poseable)) {
+  console.error('instanceof Poseable failed');
+  process.exit(1);
+}
+
+let missingPose;
+try {
+  missingPose = geom2Sample.getPose('missing');
+} catch (err) {
+  console.error('PosableGeom2 getPose threw for a missing port');
+  process.exit(1);
+}
+if (missingPose !== undefined) {
+  console.error('PosableGeom2 getPose missing port was not undefined');
+  process.exit(1);
+}
+
+let geom3Threw = false;
+try {
+  geom3Sample.getPose('missing');
+} catch (err) {
+  geom3Threw = err instanceof Error && err.message === 'Invalid port missing';
+}
+if (!geom3Threw) {
+  console.error('PosableGeom3 getPose did not throw for a missing port');
+  process.exit(1);
+}
+
+const outline = new PosableGeom2(
+  circle({ radius: 1 }),
+  { start: new Pose([0, 0, 0], [0, 0, 1], [0, 1, 0]) }
+);
+outline.alignTo('start', new Pose([1, 2, 5], [0, 0, 1], [0, 1, 0]));
+assertPoint(
+  outline.getPose('start').point,
+  [1, 2, 5],
+  1e-9,
+  'PosableGeom2 alignTo circle start'
+);
 
 console.log('pass');
