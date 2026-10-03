@@ -8,7 +8,7 @@ const CLONE_VALIDATOR = Symbol('CloneValidator');
  * PosableGeom2 and PosableGeom3 share this map. Geometry stays on the
  * subclass: a private field can only be read by the class that declares it.
  */
-class Poseable {
+class Posable {
   #poses;
 
   /** Empty pose map, then clone each given pose.
@@ -18,7 +18,7 @@ class Poseable {
    * @param {Object<string, Pose>} [poses] Named ports.
    */
   constructor(poses) {
-    if (this.constructor === Poseable) {
+    if (this.constructor === Posable) {
       throw new Error('Cannot instantiate abstract class Poseable directly');
     }
     const proto = Object.getPrototypeOf(this);
@@ -63,7 +63,7 @@ class Poseable {
    * Does not touch geometry. Subclasses override, transform their own
    * outline or solid, and call this for the poses.
    * @param {number[]} matrix Column-major 4x4.
-   * @returns {Poseable} this
+   * @returns {Posable} this
    */
   transform(matrix) {
     Object.keys(this.#poses).forEach(key => {
@@ -80,7 +80,7 @@ class Poseable {
    * source.getMatrix(targetPose).
    * @param {string|number} port Must already exist.
    * @param {Pose} targetPose
-   * @returns {Poseable} this
+   * @returns {Posable} this
    * @throws {Error} If port is missing or targetPose is not a Pose.
    */
   alignTo(port, targetPose) {
@@ -101,7 +101,7 @@ class Poseable {
    * subclass geometry, and it has to run on that class for the same reason.
    * Subclass fields copied by descriptor stay shared unless a subclass clone
    * overwrites them; see Device.
-   * @returns {Poseable}
+   * @returns {Posable}
    */
   clone() {
     const clone = Object.create(Object.getPrototypeOf(this));
@@ -121,4 +121,4 @@ class Poseable {
   }
 }
 
-module.exports = { Poseable };
+module.exports = { Posable };

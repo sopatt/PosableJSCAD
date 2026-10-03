@@ -1,7 +1,7 @@
 "use strict";
 const jscad = require('@jscad/modeling');
 const { Pose } = require('./Pose');
-const { Poseable } = require('./Poseable');
+const { Poseable } = require('./Posable');
 const { mat4, vec2, vec3, vec4 } = jscad.maths;
 const { geom2, geom3 } = jscad.geometries;
 const { colorize } = jscad.colors;

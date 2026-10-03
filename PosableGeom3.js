@@ -5,7 +5,7 @@ const { colorize } = jscad.colors;
 const { union } = jscad.booleans;
 const { geom3 } = jscad.geometries;
 const { Pose } = require('./Pose');
-const { Poseable } = require('./Poseable');
+const { Poseable } = require('./Posable');
 const { PI } = Math;
 
 /** geom3 plus named Poses.
