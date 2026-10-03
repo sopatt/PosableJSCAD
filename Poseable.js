@@ -1,6 +1,8 @@
 "use strict";
 const { Pose } = require('./Pose');
 
+const CLONE_VALIDATOR = Symbol('CloneValidator');
+
 /** Named poses moved together, with no geometry of their own.
  * @description
  * PosableGeom2 and PosableGeom3 share this map. Geometry stays on the
@@ -16,6 +18,13 @@ class Poseable {
    * @param {Object<string, Pose>} [poses] Named ports.
    */
   constructor(poses) {
+    if (this.constructor === Poseable) {
+      throw new Error('Cannot instantiate abstract class Poseable directly');
+    }
+    const proto = Object.getPrototypeOf(this);
+    if (typeof proto.cloneTo !== 'function') {
+      throw new Error('Subclass must define a cloneTo method');
+    }
     this.#poses = {};
     if (poses) {
       Object.keys(poses).forEach(key => {
@@ -32,7 +41,11 @@ class Poseable {
    * @returns {Pose|undefined}
    */
   getPose(port) {
-    return this.#poses[port];
+    const sourcePose = this.#poses[port];
+    if (!sourcePose) {
+      throw new Error(`Invalid port ${port}`);
+    }
+    return sourcePose;
   }
 
   /** Store pose at port.
@@ -92,15 +105,19 @@ class Poseable {
    */
   clone() {
     const clone = Object.create(Object.getPrototypeOf(this));
-    const descriptors = Object.getOwnPropertyDescriptors(this);
-    Object.defineProperties(clone, descriptors);
+    this.cloneTo(clone, CLONE_VALIDATOR);
+    return clone;
+  }
+
+  cloneTo(clone, validator) {
+    if (validator !== CLONE_VALIDATOR) {
+      throw new Error('Posable.cloneTo: Direct calls to cloneTo are prohibited');
+    }
     clone.#poses = Object.fromEntries(
       Object.entries(this.#poses).map(
         ([name, pose]) => [name, pose.clone()]
       )
     );
-    this.cloneGeometryOnto(clone);
-    return clone;
   }
 }
 

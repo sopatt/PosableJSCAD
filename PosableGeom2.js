@@ -99,13 +99,13 @@ class PosableGeom2 extends Poseable {
    */
   set transforms(value) { this.#geometry.transforms = value; }
 
-  /** Copy the geom2 onto a Poseable clone.
+  /** Called by Poseable.clone to copy this class's instance veriables onto the clone.
    * @description
-   * Poseable.clone copies the pose map, then calls this so #geometry is
-   * written by the class that declares it.
+   * Internal use only
    * @param {PosableGeom2} clone Shell created by Poseable.clone.
    */
-  cloneGeometryOnto(clone) {
+  cloneTo(clone, validator) {
+    super.cloneTo(clone, validator); // validates that this method is called by Posable.clone()
     clone.#geometry = geom2.clone(this.#geometry);
   }
 
@@ -127,7 +127,7 @@ class PosableGeom2 extends Poseable {
 
   /** 
    * @description Bake the transforms into the geometry so that the stored matrix is applied and reset.
-   * Use if you get geometry failing to render transforms.
+   * Use if you get geometry failing to render transforms. 
    */
   applyTransforms() {
     const geom2 = this.#geometry;
@@ -146,7 +146,6 @@ class PosableGeom2 extends Poseable {
     this.#geometry = geom2;
     return this;
   }
-
 }
 
 module.exports = { PosableGeom2 };

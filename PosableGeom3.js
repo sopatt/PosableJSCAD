@@ -18,6 +18,7 @@ const { PI } = Math;
  */
 class PosableGeom3 extends Poseable {
   #geometry;
+
   /** Clone the geom3. Poses are cloned by Poseable.
    * @description
    * The caller keeps their own objects; this instance does not alias them.
@@ -86,15 +87,16 @@ class PosableGeom3 extends Poseable {
    *
    * @param {number[]} value mat4.
    */
-  set transforms(value) { this.#geometry.transforms = value; }
+  set transforms(value) { 
+    this.#geometry.transforms = value; 
+  }
 
-  /** Copy the geom3 onto a Poseable clone.
-   * @description
-   * Poseable.clone copies the pose map, then calls this so #geometry is
-   * written by the class that declares it.
+  /** Copy the geom3 onto a Poseable clone. Called by Poseable.clone().
+   * @description  Internal use only.
    * @param {PosableGeom3} clone Shell created by Poseable.clone.
    */
-  cloneGeometryOnto(clone) {
+  cloneTo(clone, validator) {
+    super.cloneTo(clone, validator);
     clone.#geometry = geom3.clone(this.#geometry);
   }
 
@@ -110,66 +112,6 @@ class PosableGeom3 extends Poseable {
     super.transform(matrix);
     return this;
   }
-
-  /** If the geom3 still has a non-identity transform, bake polygons and keep color.
-   *
-   * @description
-   * `matrix` is unused. Called from the polygons and transforms getters so a
-   * viewer read sees the placed solid.
-   *
-   * @param {number[]} [matrix] Ignored. Left on the signature.
-   */
-  #bakeIfNecessary(matrix) { // Sonny added 9/26/2026    
-    if (!mat4.isIdentity(this.#geometry.transforms)) {
-      const polys = geom3.toPolygons(this.#geometry);
-      let fresh = geom3.create(polys);
-      if (this.#geometry.color) fresh.color = this.#geometry.color;
-      this.#geometry = fresh;
-    }
-  }
-
-  /** Pose stored at port.
-   * @description
-   * Throws when the name was never set. The base getPose returns undefined
-   * instead, which is the PosableGeom2 contract.
-   * @param {string|number} port
-   * @returns {Pose}
-   * @throws {Error} If that port was never set.
-   */
-  getPose(port) {
-    const sourcePose = super.getPose(port);
-    if (!sourcePose) {
-      throw new Error(`Invalid port ${port}`);
-    }
-    return sourcePose;
-  }
-
-  /** Store targetPose at port.
-   * @description
-   * Not cloned. Returns this; the base setPose does not.
-   * @param {string|number} port
-   * @param {Pose} targetPose
-   * @returns {PosableGeom3} this
-   */
-  setPose(port, targetPose) {
-    super.setPose(port, targetPose);
-    return this;
-  }
-
-  /** Apply transforms to the geometry.
-   *
-   * @returns
-   *   the same object with the transformed geometry; attached poses are updated
-   */
-  /* Sonny commented out 9/26/2026. Should be eliminated by #bakeIfNecessary
-  applyTransforms() {
-    // geom3.create(toPolygons(...)) drops .color — keep it.
-    const kept = this.#geometry.color;
-    this.#geometry = geom3.create(geom3.toPolygons(this.#geometry));
-    if (kept) this.#geometry = colorize(kept, this.# geometry);
-    return this;
-  }*/
-
   /** Lay parts end to end in place.
    *
    * @description
@@ -202,6 +144,10 @@ class PosableGeom3 extends Poseable {
     );
   }
 
+  /**
+   * @description Bakes stored tranforms into the geometry
+   * @returns this
+   */
   applyTransforms() {
     const g = this.#geometry;
     const m = g.transforms;

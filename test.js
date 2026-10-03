@@ -60,14 +60,13 @@ if (!(geom2Sample instanceof Poseable) || !(geom3Sample instanceof Poseable)) {
   process.exit(1);
 }
 
-let missingPose;
+let geom2Threw = false;
 try {
-  missingPose = geom2Sample.getPose('missing');
+  geom2Threw = geom2Sample.getPose('missing');
 } catch (err) {
-  console.error('PosableGeom2 getPose threw for a missing port');
-  process.exit(1);
+  geom2Threw = err instanceof Error
 }
-if (missingPose !== undefined) {
+if (!geom2Threw) {
   console.error('PosableGeom2 getPose missing port was not undefined');
   process.exit(1);
 }
