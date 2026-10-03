@@ -1,7 +1,7 @@
 "use strict";
 const jscad = require('@jscad/modeling');
 const { Pose } = require('./Pose');
-const { Poseable } = require('./Posable');
+const { Posable } = require('./Posable');
 const { mat4, vec2, vec3, vec4 } = jscad.maths;
 const { geom2, geom3 } = jscad.geometries;
 const { colorize } = jscad.colors;
@@ -28,7 +28,7 @@ const det2 = (m) => m[0] * m[5] - m[4] * m[1];
  * The outline is the cross-section in its own XY. A pose is a port on that
  * outline, not a move of the sides by itself.
  */
-class PosableGeom2 extends Poseable {
+class PosableGeom2 extends Posable {
   #geometry;
   /** Clone the geom2. Poses are cloned by Poseable.
    * @description

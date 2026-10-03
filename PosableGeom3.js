@@ -5,7 +5,7 @@ const { colorize } = jscad.colors;
 const { union } = jscad.booleans;
 const { geom3 } = jscad.geometries;
 const { Pose } = require('./Pose');
-const { Poseable } = require('./Posable');
+const { Posable } = require('./Posable');
 const { PI } = Math;
 
 /** geom3 plus named Poses.
@@ -16,7 +16,7 @@ const { PI } = Math;
  * A pose is a named port on the solid. 'start' and 'end' are the chain ports
  * used by fromChain.
  */
-class PosableGeom3 extends Poseable {
+class PosableGeom3 extends Posable {
   #geometry;
 
   /** Clone the geom3. Poses are cloned by Poseable.
