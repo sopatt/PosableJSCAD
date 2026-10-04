@@ -92,6 +92,9 @@ class PosableGeom2 extends Posable {
   //  this.#bakeIfNecessary();
     return this.#geometry.transforms; 
   }
+  get geom2() {
+    return geom2.clone(this.#geometry);
+  }
 
   /** Replace the geom2 transform matrix.
    *

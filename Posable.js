@@ -9,12 +9,12 @@ const CLONE_VALIDATOR = Symbol('CloneValidator');
  * subclass: a private field can only be read by the class that declares it.
  */
 class Posable {
-  #poses;
+  #poses = Object.create(null);
 
   /** Empty pose map, then clone each given pose.
    * @description
    * The caller's pose objects are not kept. There is no geometry argument;
-   * the subclass stores that itself.
+   * the subclass stores that itself. Subclass must implement cloneTo(clone, validator)
    * @param {Object<string, Pose>} [poses] Named ports.
    */
   constructor(poses) {
@@ -25,7 +25,6 @@ class Posable {
     if (typeof proto.cloneTo !== 'function') {
       throw new Error('Subclass must define a cloneTo method');
     }
-    this.#poses = {};
     if (poses) {
       Object.keys(poses).forEach(key => {
         this.#poses[key] = poses[key].clone();
@@ -93,7 +92,6 @@ class Posable {
     }
     return this.transform(source.getMatrix(targetPose));
   }
-
   /** Prototype-linked copy with cloned poses.
    * @description
    * Own property descriptors are copied. #poses is cloned here so that
@@ -104,11 +102,11 @@ class Posable {
    * @returns {Posable}
    */
   clone() {
-    const clone = Object.create(Object.getPrototypeOf(this));
+    const Constructor = this.constructor;
+    const clone = new Constructor();
     this.cloneTo(clone, CLONE_VALIDATOR);
     return clone;
   }
-
   cloneTo(clone, validator) {
     if (validator !== CLONE_VALIDATOR) {
       throw new Error('Posable.cloneTo: Direct calls to cloneTo are prohibited');

@@ -90,6 +90,9 @@ class PosableGeom3 extends Posable {
   set transforms(value) { 
     this.#geometry.transforms = value; 
   }
+  get geom3() {
+    return geom3.clone(this.#geometry);
+  }
 
   /** Copy the geom3 onto a Poseable clone. Called by Poseable.clone().
    * @description  Internal use only.
