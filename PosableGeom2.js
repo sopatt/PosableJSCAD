@@ -133,20 +133,20 @@ class PosableGeom2 extends Posable {
    * Use if you get geometry failing to render transforms. 
    */
   applyTransforms() {
-    const geom2 = this.#geometry;
-    const m = geom2.transforms;
+    const g = this.#geometry;
+    const m = g.transforms;
     if (!m || mat4.isIdentity(m)) return this;
 
-    const sides = geom2.sides;
+    const sides = g.sides;
     for (let i = 0; i < sides.length; i++) {
       const a = sides[i][0]; //a[z] = 0;
       const b = sides[i][1]; //b[z] = 0;
       // vec2.transform writes into the first arg
-      vec3.transform(a, a, m);
-      vec3.transform(b, b, m);
+      vec2.transform(a, a, m);
+      vec2.transform(b, b, m);
     }
-    geom2.transforms = mat4.create();
-    this.#geometry = geom2;
+    g.transforms = mat4.create();
+    this.#geometry = g;
     return this;
   }
 }

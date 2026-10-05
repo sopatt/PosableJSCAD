@@ -21,10 +21,6 @@ class Posable {
     if (this.constructor === Posable) {
       throw new Error('Cannot instantiate abstract class Poseable directly');
     }
-    const proto = Object.getPrototypeOf(this);
-    if (typeof proto.cloneTo !== 'function') {
-      throw new Error('Subclass must define a cloneTo method');
-    }
     if (poses) {
       Object.keys(poses).forEach(key => {
         this.#poses[key] = poses[key].clone();
@@ -102,21 +98,9 @@ class Posable {
    * @returns {Posable}
    */
   clone() {
-    const Constructor = this.constructor;
-    const clone = new Constructor();
-    this.cloneTo(clone, CLONE_VALIDATOR);
-    return clone;
+    return new Posable(this.#poses);
   }
-  cloneTo(clone, validator) {
-    if (validator !== CLONE_VALIDATOR) {
-      throw new Error('Posable.cloneTo: Direct calls to cloneTo are prohibited');
-    }
-    clone.#poses = Object.fromEntries(
-      Object.entries(this.#poses).map(
-        ([name, pose]) => [name, pose.clone()]
-      )
-    );
-  }
+
 }
 
 module.exports = { Posable };
