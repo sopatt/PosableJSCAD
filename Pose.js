@@ -280,6 +280,20 @@ class Pose {
     return this;
   }
 
+  /** Reverse the heading IN PLACE: heading becomes -heading; point and up stay.
+   * @description
+   * Deliberate exception to the no-mutation rule (like roll / transform /
+   * translate, it returns this). The frame stays a proper right-handed
+   * frame: right = heading x up flips with the heading, so this is a
+   * 180-degree turn about up through the point, not a reflection. Twice
+   * is the identity. Clone first to keep the original.
+   * @returns {Pose} this
+   */
+  reverse() {
+    this.#heading = vec3.negate(vec3.create(), this.#heading);
+    return this;
+  }
+
   /** Roll about heading so up points at `point` in the plane perpendicular to heading.
    *
    * @description
