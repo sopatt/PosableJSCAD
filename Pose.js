@@ -9,70 +9,6 @@ const { cylinder, sphere, cylinderElliptic } = jscad.primitives;
 
 const [x, y, z, w] = [0, 1, 2, 3];
 
-/** Squared distance between two points.
- *
- * @description
- * Used by Pose.equals so a compare does not pay for a square root.
- *
- * @param {number[]} A First point.
- * @param {number[]} B Second point.
- * @returns {number} |A-B|^2.
- */
-function squareOfDistance(A, B) {
-  const [Ax, Ay, Az] = A;
-  const [Bx, By, Bz] = B;
-  return (Ax - Bx) ** 2 + (Ay - By) ** 2 + (Az - Bz) ** 2;
-}
-
-/** Debug geom3: a sphere at the point, plus an arrow on heading and an arrow on up.
- *
- * @description
- * Each arrow is built along +Z, then rotated onto its vector. Arrow size
- * scales with that vector's length.
- *
- * @param {Pose} pose Frame to draw.
- * @returns {object} geom3
- */
-function renderPose(pose) {
-  const vecGeom = (vector) => {
-    const vectorLength = vec3.length(vector) || 1;
-    const vectorRadius = vectorLength / 10;
-    const arrowLength = vectorLength / 5;
-    const arrowRadius = vectorLength / 5;
-    let out = union(
-      cylinder({
-        center: [0, 0, vectorLength / 2],
-        height: vectorLength,
-        radius: vectorRadius
-      }),
-      cylinderElliptic({
-        center: [0, 0, vectorLength],
-        startRadius: [arrowRadius, arrowRadius],
-        endRadius: [0, 0],
-        height: arrowLength
-      })
-    );
-    out = geom3.transform(
-      mat4.fromVectorRotation(
-        mat4.create(),
-        [0, 0, vectorLength],
-        vector
-      ),
-      out
-    );
-    return out;
-  };
-
-  return translate(
-    pose.point,
-    union(
-      sphere({ radius: 0.2 }),
-      vecGeom(pose.heading),
-      vecGeom(pose.up)
-    )
-  );
-}
-
 /** A rigid frame: point, heading, and up.
  *
  * @classdesc
@@ -359,6 +295,15 @@ class Pose {
     );
   }
 
+  /** Point rolled around this pose: see the module function rollAround.
+   * @description
+   * Replaces the old `rollAround` export (now module-private). The point is not mutated.
+   * @param {number[]} point
+   * @returns {number[]} new point
+   */
+  rollAround(point) {
+    return rollAround(point, this);
+  }
 }
 
 /** Roll point around pose.point in the plane orthogonal to pose.heading.
@@ -387,4 +332,69 @@ function rollAround(point, pose) {
     vec3.add(vec3.create(), parallel, spun)
   );
 }
-module.exports = { Pose, rollAround }; // end of file
+
+/** Squared distance between two points.
+ *
+ * @description
+ * Used by Pose.equals so a compare does not pay for a square root.
+ *
+ * @param {number[]} A First point.
+ * @param {number[]} B Second point.
+ * @returns {number} |A-B|^2.
+ */
+function squareOfDistance(A, B) {
+  const [Ax, Ay, Az] = A;
+  const [Bx, By, Bz] = B;
+  return (Ax - Bx) ** 2 + (Ay - By) ** 2 + (Az - Bz) ** 2;
+}
+
+/** Debug geom3: a sphere at the point, plus an arrow on heading and an arrow on up.
+ *
+ * @description
+ * Each arrow is built along +Z, then rotated onto its vector. Arrow size
+ * scales with that vector's length.
+ *
+ * @param {Pose} pose Frame to draw.
+ * @returns {object} geom3
+ */
+function renderPose(pose) {
+  const vecGeom = (vector) => {
+    const vectorLength = vec3.length(vector) || 1;
+    const vectorRadius = vectorLength / 10;
+    const arrowLength = vectorLength / 5;
+    const arrowRadius = vectorLength / 5;
+    let out = union(
+      cylinder({
+        center: [0, 0, vectorLength / 2],
+        height: vectorLength,
+        radius: vectorRadius
+      }),
+      cylinderElliptic({
+        center: [0, 0, vectorLength],
+        startRadius: [arrowRadius, arrowRadius],
+        endRadius: [0, 0],
+        height: arrowLength
+      })
+    );
+    out = geom3.transform(
+      mat4.fromVectorRotation(
+        mat4.create(),
+        [0, 0, vectorLength],
+        vector
+      ),
+      out
+    );
+    return out;
+  };
+
+  return translate(
+    pose.point,
+    union(
+      sphere({ radius: 0.2 }),
+      vecGeom(pose.heading),
+      vecGeom(pose.up)
+    )
+  );
+}
+
+module.exports = { Pose }; // end of file

@@ -86,6 +86,7 @@ class Posable {
     if (!targetPose || !(targetPose instanceof Pose)) {
       throw new Error(`Invalid targetPose`);
     }
+    if (source.equals(targetPose)) return this; // already there: no transform
     return this.transform(source.getMatrix(targetPose));
   }
   /** Prototype-linked copy with cloned poses.

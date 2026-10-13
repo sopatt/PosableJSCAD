@@ -3,10 +3,10 @@
 const { Straight } = require('./Straight');
 const { Bend } = require('./Bend');
 const { DogLeg } = require('./DogLeg');
-const { Pose, rollAround } = require('./Pose');
+const { Pose } = require('./Pose');
 const { PosableGeom2 } = require('./PosableGeom2');
 const { PosableGeom3 } = require('./PosableGeom3');
-const { Poseable } = require('./Poseable');
+const { Posable } = require('./Posable');
 const jscad = require('@jscad/modeling');
 const { circle } = jscad.primitives;
 
@@ -45,7 +45,7 @@ const dogEnd = new DogLeg(1, 50, 100, 100).getPose('end').point;
 assertPoint(dogEnd, [0, 100, 100], 1e-4, 'DogLeg(1, 50, 100, 100) end');
 
 const pose = new Pose([1, 2, 3], [0, 0, 1], [0, 1, 0]);
-const rolled = rollAround([4, 6, 10], pose);
+const rolled = pose.rollAround([4, 6, 10]);
 assertPoint(rolled, [1, 7, 10], 1e-9, 'rollAround');
 
 if (straightEnd[z] !== 10 || bendEnd[y] === 0 || dogEnd[y] === 0 || rolled[x] !== 1) {
@@ -55,8 +55,8 @@ if (straightEnd[z] !== 10 || bendEnd[y] === 0 || dogEnd[y] === 0 || rolled[x] !=
 
 const geom2Sample = new PosableGeom2(circle({ radius: 1 }));
 const geom3Sample = new PosableGeom3();
-if (!(geom2Sample instanceof Poseable) || !(geom3Sample instanceof Poseable)) {
-  console.error('instanceof Poseable failed');
+if (!(geom2Sample instanceof Posable) || !(geom3Sample instanceof Posable)) {
+  console.error('instanceof Posable failed');
   process.exit(1);
 }
 
