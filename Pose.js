@@ -275,10 +275,6 @@ class Pose {
     );
 		return this;
   }
-  translateOnHeading(distance) {
-    const along = vec3.scale(vec3.create(), this.heading, distance);
-    return this.translate(along);
-  }
   /** True when point, heading, and up each match within 1e-8 squared distance.
    *
    * @description
